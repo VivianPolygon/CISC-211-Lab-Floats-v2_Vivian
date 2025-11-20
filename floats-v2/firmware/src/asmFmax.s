@@ -1,5 +1,5 @@
 /*** asmFmax.s   ***/
-#include <xc.h>
+
 .syntax unified
 
 /* Declare the following to be in data memory */
@@ -79,9 +79,9 @@ nanValue: .word 0x7FFFFFFF
 .global initVariables
  .type initVariables,%function
 initVariables:
-    /* YOUR initVariables CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR initVariables CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
 
-    /* YOUR initVariables CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR initVariables CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
 
     
 /********************************************************************
@@ -96,9 +96,9 @@ initVariables:
 .global getSignBit
 .type getSignBit,%function
 getSignBit:
-    /* YOUR getSignBit CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR getSignBit CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
 
-    /* YOUR getSignBit CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR getSignBit CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
     
 
     
@@ -117,9 +117,9 @@ getSignBit:
 .global getExponent
 .type getExponent,%function
 getExponent:
-    /* YOUR getExponent CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR getExponent CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
     
-    /* YOUR getExponent CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR getExponent CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
    
 
     
@@ -135,9 +135,9 @@ getExponent:
 .global getMantissa
 .type getMantissa,%function
 getMantissa:
-    /* YOUR getMantissa CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR getMantissa CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
     
-    /* YOUR getMantissa CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR getMantissa CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
    
 
 
@@ -155,9 +155,9 @@ getMantissa:
 .global asmIsZero
 .type asmIsZero,%function
 asmIsZero:
-    /* YOUR asmIsZero CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR asmIsZero CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
     
-    /* YOUR asmIsZero CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR asmIsZero CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
    
 
 
@@ -175,9 +175,9 @@ asmIsZero:
 .global asmIsInf
 .type asmIsInf,%function
 asmIsInf:
-    /* YOUR asmIsInf CODE BELOW THIS LINE! Don't forget to push and pop! */
+    /* YOUR asmIsInf CODE BELOW THIS LINE! Don't forget to follow the calling convention! */
 
-    /* YOUR asmIsInf CODE ABOVE THIS LINE! Don't forget to push and pop! */
+    /* YOUR asmIsInf CODE ABOVE THIS LINE! Don't forget to follow the calling convention! */
    
 
 
@@ -213,6 +213,8 @@ where:
 .global asmFmax
 .type asmFmax,%function
 asmFmax:   
+
+    /* DON'T FORGET TO FOLLOW THE CALLING CONVENTION!  */
 
     /* YOUR asmFmax CODE BELOW THIS LINE! VVVVVVVVVVVVVVVVVVVVV  */
 
