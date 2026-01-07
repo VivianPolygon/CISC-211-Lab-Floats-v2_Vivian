@@ -37,15 +37,11 @@
 # added by VB
 *.elf
 *.hex
-*s~
-*.swp
-*.c~
-*.c~
 build/
 dist/
-*.prof.s
-.DS_Store
-.DS_Store
-.DS_Store
-.DS_Store
+*.s~
 *.un~
+*.swp
+*.*~
+.DS_Store
+private/
