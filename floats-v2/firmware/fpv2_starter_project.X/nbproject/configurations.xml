@@ -1544,8 +1544,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-fffff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/lunch/Documents/GitHub/CISC-211-Lab-Floats-v2/floats-v2/firmware/fpv2_starter_project.X/debug/sam_e51_cnano/fpv2_starter_project_ptg"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges"
@@ -1565,6 +1563,7 @@
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
         <property key="voltagevalue" value=""/>
+        <property key="x.erase.clearprot" value="true"/>
       </nEdbgTool>
     </conf>
   </confs>
