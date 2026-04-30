@@ -296,7 +296,7 @@ asmFmax:
     /* r1 input is f1 (floating-point value) */
     /* r0 output is address of fmax */
     push {r4-r11,LR}   
-    BL initVariables
+    BL initVariables /* initialize all variables to 0. Only write to fMax, function dosen't interact out f0 and f1 blocks after init */
     
     /* input processing */
     LDR r2, =f0 /* assign the designated location in memory the inputted first floating-point operand */
@@ -324,37 +324,63 @@ asmFmax:
     or if they share a sign. in the former case, we can immediatly return, in the latter more steps are required, but we also
     need to remember what the sign that was shared is */
     TEQ r8, 1       /* case: 1  */
-    LDREQ r0, =f0   /* Load to r5 address of f0; */ 
+    LDREQ r0, =f0   /* Load to r0 address of f0; */ 
     BEQ assignFloat /* break; */  /* if our sign comparison results in a 1, f0 is positive, and f1 is negative. f0 is larger */
     TEQ r8, 2       /* case: 2  */
-    LDREQ r0, =f1   /* load to r5 address of f1; */
+    LDREQ r0, =f1   /* load to r0 address of f1; */
     BEQ assignFloat /* break;   */  /* if our sign comparison results in a 2, f0 is negative, and f1 is positive. f1 is larger */   
     MOV r9, 0  /* after this point, we know the signs match, we need to note what they are though. line defaults the shared sign to positive */
     TEQ r8, 3       /* case: 3  */
     MOVEQ r9, 1     /* load 1 into r9, indicates that the sign is negative */
-    B quickEval     /* default case, matching signs */
      
+    /* signs match, exponent and mantissa need to be directly checked */
     
-    quickEval:
-	LDR r6, =f0
-	LDR r6, [r6]
-	LSL r6, r6, 1 /* load float f0, and shift out sign bit */
+    /* compare exponent and mantissam (r10 - f0, r1 - f11) */
+    LDR r10, =f0 /* get float addresses */
+    LDR r11, =f1
 	
-	LDR r7, =f1
-	LDR r7, [r7]
-	LSL r7, r7, 1 /* load float f1, and shift out sign bit */
+    /* pseudo-delegates! */
+    LDR r6, =getExponent /* get the instruction address of get exponent into a register (we can swap this out with getMantissa later and reuse subsequent code) */
+    MOV r7, 0 /* this is used to prevent infinite loops, counter */
+    MOV r8, PC /* store this line into the program counter so that we can return later */
+    /* get f0 exponent (1st run), get f0 mantissa (2nd run) */
+
+    MOV r0, r10 /* move f0's address into r0, both getExponent and getMantissa use this as their input */
+    BLX r6 /* on the first pass, this is getExponent, on the second, getMantissa */
+    MOV r4, r0 /* move into perserved register */
+    /* get f1 exponent (1st run), get f1 mantissa (2nd run) */
+    MOV r0, r11 /* move f1's address into r0, both getExponent and getMantissa use this as their input */
+    BLX r6 /* on the first pass, this is getExponent, on the second, getMantissa */
+    MOV r5, r0 /* move into perserved register */
 	
+    /* position float addresses for sharedSignApply */
+    MOV r0, r10
+    MOV r1, r11
+
+    /* compare the values of the exponents to eachother (first pass), and mantissas (second pass) */
+    CMP r4, r5
+    MOVPL r2, 0 /* indicates that f0 is larger, or they are identical */
+    MOVMI r2, 1 /* indicates that f1 is larger */
+    BNE sharedSignApply /* if there is a disparity, we know one is larger, branch out. Will exit after first pass if exponent is larger */
+	
+    CMP r7, 1 /* r7 will be 1 at the end of the second pass. If this is hit, the floats are identical. */
+    BEQ sharedSignApply /* exit, if this wasen't here, we would run the second pass over and over again if the floats are identical */
+	
+    LDR r6, =getMantissa /* for our second pass, we want to use getMantissa instead of getExponent, so assign it to r6 */
+    MOV r7, 1 /* allows us to exit in the edgecase of identical floats */
+    MOV PC, r8 /* moves us back to the top of this section */
+	
+	/* apply shared sign flip to comparison, then sets */
+	/* f0's address should be in r10, f1's address should be in r11 */
+	/* r2 should contain a 0 if f0 has a greater abs, and a 1 if it has a smaller abs */
+	/* r9 should contain a 0 if the shared sign is positive, and a 1 if the shared sign is negative */
+    sharedSignApply:
 	/* swap float positions before compare to invert result to map abs comparison to actual value comparison */
-	CMP r9, 0
-	MOVNE r5, r6
-	MOVNE r6, r7
-	MOVNE r7, r5
-	
-	CMP r6, r7 /* without the sign bit, whichever value is higher when read as an unsigned integer has a higher absolute value */
-	LDRHI r0, =f0 /* f0 has a higher value */
-	LDRLS r0, =f1 /* f1 has higher value, or they are equal  */
-	B assignFloat
-	
+	EORS r9, r2 /* by default, point to f0 *//* if both are negative, flip to f1 */ /* if f1 is larger, flip to f1 */ /* if both, no change (f0) */ 
+	MOVNE r2, r1 /* swap r0 and r1 */
+	MOVNE r1, r0
+	MOVNE r0, r2
+	B assignFloat /* whatever float's address is in r0 will be assigned */
 	
 	/* put address of float in r0 */
     assignFloat:
