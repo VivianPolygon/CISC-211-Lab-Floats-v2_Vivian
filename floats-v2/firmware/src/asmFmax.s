@@ -305,44 +305,50 @@ asmFmax:
      
     /* signs match, exponent and mantissa need to be directly checked (jumping to assignFloat skips this section)*/
     
-    /* compare exponent and mantissa (r10 - f0, r1 - f11, r10 and r11 no longer need the individual signs, as r9 holds the relevant information on their shared sign) */
-    LDR r10, =f0 /* get float address for f0 */
-    LDR r11, =f1 /* get float address for f1 */
-	
     /* pseudo-delegates! */
-    LDR r6, =getExponent /* get the instruction address of getExponent into a register (we can swap this out with getMantissa later and reuse subsequent code!) */
-    MOV r8, PC /* stores the line after the next into the Program Counter. Confirmed that like 318 is what gets stored through debugging techniques*/
-    MOV r7, 0 /* this is used to prevent infinite loops, lets us know what pass we are on */
+    LDR r0, =f0 /* move f0's address to r0 for compareComponent */
+    LDR r1, =f1 /* move f1's address to r1 for compareComponent */
+    LDR r2, =getExponent /* move the address of function label for getExponent to r2, its called as a subrouting within compare component the first time. */
+    BL compareComponent /* compare the two exponents. If they are equal, the mantissas must also be compared, but we can determine which float from here otherwise*/
+    BNE comparisonDetermination /* function sets flags from output, if two floats are not equal, we can determine which is larger*/
+    LDR r0, =f0 /* move f0's address to r0 for compareComponent */
+    LDR r1, =f1 /* move f1's address to r1 for compareComponent */
+    LDR r2, =getMantissa /* compare two mantissas. If they are equal, the floats are equal (exponents also equal). either can be returned. */
     
-    /* get f0 exponent (1st pass), get f0 mantissa (2nd pass) */
-    MOV r0, r10 /* move f0's address into r0, both getExponent and getMantissa use this as their input */
-    BLX r6 /* on the first pass, this is getExponent, on the second, getMantissa */
-    MOV r4, r0 /* move into perserved register */
-    /* get f1 exponent (1st pass), get f1 mantissa (2nd pass) */
-    MOV r0, r11 /* move f1's address into r0, both getExponent and getMantissa use this as their input */
-    BLX r6 /* on the first pass, this is getExponent, on the second, getMantissa */
-
-    /* compare the values of the exponents to eachother (first pass), and mantissas (second pass) */
-    CMP r4, r0 /* compare function outputs to see which is larger, r0 has f1's exponent or mantissa from function call */
-    MOVPL r2, 0 /* indicates that f0 is larger (absolute value), or they are identical */
-    MOVMI r2, 1 /* indicates that f1 is larger (absolute value) */
-    BNE sharedSignApply /* if there is a disparity, we know one is larger, branch out. Will exit after first pass if exponent is larger */
+    /* flags set from comparisonDetermination output. Determines which float is larger in terms of absolute value */
+    comparisonDetermination:
+	MOVPL r2, 0 /* output indicated that float 0 was larger (or f0 = f1) */
+	MOVMI r2, 1 /* output indicated that float 1 was larger */
+	B sharedSignApply /* using absolute value size determination, and what the shared sign is, this will determine which is actualy a larger value */
+    
+    /* Input: r0 should have the address of f0, r1 should have the address of f1, r2 should have the subroutine to call to get the component */
+    /* Output r0: 1: f0 is greater,  0: f0 and f1 are equal,  -1: f1 is greater */
+    /* Flags are set to output before returning */
+    compareComponent:
+	push {r4-r11,LR} /* perserve upper registers, and link register (calling convention 1) */ 
 	
-    CMP r7, 1 /* r7 will be 1 at the end of the second pass. If this is hit, the floats are identical. */
-    BEQ sharedSignApply /* exit, if this wasn't here, we would run the second pass over and over again if the floats are identical */
+	/* subroutine calls */
+	MOV r11, r1 /* move f1 out of the way to perserve */
+	MOV r10, r2 /* perserve subroutine address (it is called twice) */
+	BLX r10 /* (f0) goes and gets the component (exponent or mantissa) from subroutine input. r0 will have the component as stored */
+	MOV r4, r0 /* move float 1's component result to r4 to perserve */
+	MOV r0, r11 /* move f1's address to input for next run of subroutine */
+	BLX r10 /* (f1) goes and gets the component (exponent or mantissa) from subroutine input. r0 will have the component as stored */
+	/* comparison and return setting */
+	CMP r4, r0 /* compare components directly to see which is larger */
+	MOVSPL r0, 1  /* f0's component is larger, so return 1 */
+	MOVSEQ r0, 0  /* components are identical, so return 0 */
+	MOVSMI r0, -1 /* f1's component is larger, so return 1 */
 	
-    LDR r6, =getMantissa /* for our second pass, we want to use getMantissa instead of getExponent, so assign it to r6 */
-    MOV r7, 1 /* allows us to exit in the edgecase of identical floats */
-    MOV PC, r8 /* moves us back to the top of this section */
+	pop {r4-r11,LR} /* restore upper registers, and link register (calling convention 2) */
+	BX LR /* branch with exchange to use whats in the link register to move back to the caller (calling convention 3) */
 	
     /* apply shared sign flip to comparison, then sets */
-    /* f0's address should be in r10, f1's address should be in r11 */
     /* r2 should contain a 0 if f0 has a greater abs, and a 1 if it has a smaller abs */
     /* r9 should contain a 0 if the shared sign is positive, and a 1 if the shared sign is negative */
     sharedSignApply:
-        /* position float addresses for assignFloat */
-	MOV r0, r10 /* r0 becomes f0 */
-	MOV r1, r11 /* f1 becomes f1 */
+	LDR r0, =f0
+	LDR r1, =f1
 	/* swap float positions before compare to invert result to map abs comparison to actual value comparison */
 	EORS r9, r2 /* by default, point to f0 *//* if both are negative, flip to f1 */ /* if f1 is larger, flip to f1 */ /* if both, no change (f0) */ 
 	MOVNE r2, r1 /* swap r0 and r1 */
