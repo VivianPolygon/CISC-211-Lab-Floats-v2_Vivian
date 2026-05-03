@@ -62,7 +62,7 @@ sbMax: .word 0
 storedExpMax: .word 0
 realExpMax: .word 0
 mantMax: .word 0
-
+ 
 .global nanValue 
 .type nanValue,%gnu_unique_object
 nanValue: .word 0x7FFFFFFF            
@@ -157,10 +157,9 @@ getMantissa:
     
     LDR r0, [r0] /* load from input */
     /* mantissa is in bits 0 - 22 */
-    LDR r1, =0x7FFFFF /* mask removes non-mantissa bits */
-    AND r0, r0, r1 /* apply mask */
-    LDR r1, =0x800000 /* implied bit */
-    ADD r1, r0, r1 /* adds implied bit */
+    LDR r1, =0xFFFFFE01 /* mask removes non-mantissa bits */
+    AND r0, r0, r1, LSR 9 /* apply mask */
+    ADD r1, r0, r1, LSL 23  /* adds implied bit */
     
     pop {r4-r11,LR} /* restore upper registers, and link register (calling convention 2) */
     MOV PC, LR /* move the link register into the program counter to jump back to the caller (calling convention 3) */
